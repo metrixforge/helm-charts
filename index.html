@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MetrixForge Helm charts</title>
+  <meta name="description" content="Official Helm charts for MetrixForge — the in-cluster uni-exporter agent for Kubernetes FinOps, rightsizing and reliability." />
+  <style>
+    :root{
+      --bg:#0a0a0b; --card:#141416; --border:#26262b; --fg:#e7e7ea; --muted:#9a9aa2;
+      --primary:#0090ff; --savings:#10b981; --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55;
+      -webkit-font-smoothing:antialiased}
+    .wrap{max-width:760px;margin:0 auto;padding:56px 20px 72px}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+    .logo{width:40px;height:40px;border-radius:11px;background:var(--primary);color:#fff;
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+    h1{font-size:22px;margin:0;font-weight:700}
+    .sub{color:var(--muted);margin:4px 0 0;font-size:14px}
+    h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+      margin:36px 0 12px;font-weight:600}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+    .code{position:relative;background:#0f0f11;border:1px solid var(--border);border-radius:10px;
+      padding:12px 44px 12px 14px;font-family:var(--mono);font-size:12.5px;color:#d6d6db;
+      overflow-x:auto;white-space:pre}
+    .code + .code{margin-top:10px}
+    .copy{position:absolute;top:8px;right:8px;background:#1b1b1f;border:1px solid var(--border);
+      color:var(--muted);border-radius:7px;padding:4px 8px;font-size:11px;cursor:pointer}
+    .copy:hover{color:var(--fg)}
+    .chart{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .chart h3{margin:0;font-size:15px}
+    .chart p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:46ch}
+    .badge{font-family:var(--mono);font-size:11px;color:var(--savings);
+      border:1px solid #1f3d31;background:#0e1a15;border-radius:999px;padding:2px 9px}
+    a{color:var(--primary);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .links{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:13px}
+    footer{margin-top:48px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);padding-top:20px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div>
+        <h1>MetrixForge Helm charts</h1>
+        <p class="sub">In-cluster agents for Kubernetes FinOps, rightsizing &amp; reliability.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="code" id="add">helm repo add metrixforge https://metrixforge.github.io/helm-charts
+helm repo update<button class="copy" onclick="cp('add',this)">Copy</button></div>
+    </div>
+
+    <h2>Charts</h2>
+    <div class="card">
+      <div class="chart">
+        <div>
+          <h3>uni-exporter</h3>
+          <p>The in-cluster agent — collects metrics, usage percentiles and pod-lifecycle events. One leader-elected Deployment, read-only by default.</p>
+        </div>
+        <span class="badge">v1.0.0 · app 1.0.17</span>
+      </div>
+      <div class="code" style="margin-top:14px" id="inst">helm install uni-exporter metrixforge/uni-exporter \
+  --namespace metrixforge --create-namespace \
+  --set-string credentials.appId=&lt;APP_ID&gt; \
+  --set-string credentials.appSecret=&lt;APP_SECRET&gt;<button class="copy" onclick="cp('inst',this)">Copy</button></div>
+      <div class="links">
+        <a href="https://github.com/metrixforge/helm-charts/tree/main/charts/uni-exporter">Chart source</a>
+        <a href="https://github.com/metrixforge/helm-charts/blob/main/charts/uni-exporter/values.yaml">values.yaml (all options)</a>
+        <a href="https://github.com/metrixforge/helm-charts#readme">Docs / GitOps / Copilot</a>
+      </div>
+    </div>
+
+    <p class="sub" style="margin-top:16px">Get your <code style="font-family:var(--mono)">APP_ID</code> / <code style="font-family:var(--mono)">APP_SECRET</code> from the MetrixForge dashboard → <b>Settings → Connect cluster</b>.</p>
+
+    <footer>
+      <a href="https://metrixforge.io">metrixforge.io</a> ·
+      <a href="https://app.metrixforge.io">Dashboard</a> ·
+      <a href="https://github.com/metrixforge/helm-charts">GitHub</a>
+    </footer>
+  </div>
+
+  <script>
+    function cp(id, btn){
+      var el = document.getElementById(id).cloneNode(true);
+      var b = el.querySelector('.copy'); if(b) b.remove();
+      navigator.clipboard.writeText(el.textContent.trim());
+      var t = btn.textContent; btn.textContent = 'Copied'; setTimeout(function(){btn.textContent = t}, 1500);
+    }
+  </script>
+</body>
+</html>
