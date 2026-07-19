@@ -1,0 +1,35 @@
+✅ MetrixForge uni-exporter installed as "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Mode: {{ if .Values.actuator.enabled }}COPILOT (read + patch-only write){{ else }}READ-ONLY{{ end }}{{ if .Values.lifecycle.enabled }} · lifecycle ON{{ end }}{{ if .Values.leaderElection.enabled }} · leader-election ON{{ end }}
+
+1. Check the agent is running (only ONE pod is the active leader):
+   kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+   kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "uni-exporter.fullname" . }} | grep leader-election
+
+2. Data should appear in the MetrixForge dashboard within a few minutes (first
+   export is gated by a 2-min warmup + the 5-min snapshot window).
+
+{{- if .Values.credentials.create }}
+🔑 Your app secret was passed via --set, so it is stored in the Helm release
+   (kubectl -n {{ .Release.Namespace }} get secret sh.helm.release... ) and likely in your shell
+   history. It is rotatable from the MetrixForge dashboard if it may have leaked.
+   For GitOps/prod, pre-create the Secret and install with:
+     --set credentials.create=false --set credentials.existingSecret=<name>
+{{- else }}
+⚠ credentials.create=false — ensure Secret "{{ .Values.credentials.existingSecret }}" exists in namespace "{{ .Release.Namespace }}" with keys APP_ID and APP_SECRET.
+{{- end }}
+
+{{- if .Values.actuator.enabled }}
+
+🔧 Copilot write mode is ON. Revoke write access instantly with:
+   kubectl delete clusterrolebinding {{ include "uni-exporter.fullname" . }}-actuator
+   (or: helm upgrade {{ .Release.Name }} --reuse-values --set actuator.enabled=false)
+{{- else }}
+
+To enable Copilot (apply rightsizing recs from the dashboard) later:
+   helm upgrade {{ .Release.Name }} metrixforge/uni-exporter \
+     -n {{ .Release.Namespace }} --reuse-values --set actuator.enabled=true
+{{- end }}
+
+Upgrade the agent:  helm repo update && helm upgrade {{ .Release.Name }} metrixforge/uni-exporter -n {{ .Release.Namespace }} --reuse-values
+Uninstall:          helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}

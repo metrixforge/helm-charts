@@ -1,0 +1,16 @@
+{{- if .Values.actuator.enabled -}}
+# Turns on the actuator polling loop (agent reads ACTUATOR_ENABLED at startup).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}-actuator-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+    metrixforge.io/component: actuator
+data:
+  ACTUATOR_ENABLED: "true"
+  DATA_API_URL: {{ .Values.actuator.dataApiUrl | quote }}
+  ACTUATOR_POLL_INTERVAL: {{ .Values.actuator.pollInterval | quote }}
+  ACTUATOR_HOURLY_LIMIT: {{ .Values.actuator.hourlyLimit | quote }}
+{{- end }}

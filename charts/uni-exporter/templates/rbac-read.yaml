@@ -1,0 +1,93 @@
+{{- if .Values.rbac.create -}}
+# Read-only cluster access for metrics/lifecycle collection + the recommendation
+# engine. Release-suffixed so two installs on one cluster don't collide.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "pods", "events"]
+    verbs: ["get", "list", "watch"]
+  # EBS-backed PVs for storage-cost attribution.
+  - apiGroups: [""]
+    resources: ["persistentvolumes", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  # Workload templates — InPlace-resize readiness + GitOps owner detection.
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list", "watch"]
+  # Karpenter — read-only NodePool + EC2NodeClass for the optimization engine.
+  - apiGroups: ["karpenter.sh"]
+    resources: ["nodepools"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["karpenter.k8s.aws"]
+    resources: ["ec2nodeclasses"]
+    verbs: ["get", "list", "watch"]
+  # CRD presence — Flux/Argo detection for the GitOps Apply-button matrix.
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list"]
+  # PodDisruptionBudgets — Karpenter disruption-budget recommendations.
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "uni-exporter.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "uni-exporter.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- if .Values.leaderElection.enabled }}
+---
+# Leader election — a single Lease in this namespace lets exactly ONE replica
+# scrape/upload/actuate at a time (namespaced Role = least privilege).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}-leaderelection
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}-leaderelection
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "uni-exporter.fullname" . }}-leaderelection
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "uni-exporter.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

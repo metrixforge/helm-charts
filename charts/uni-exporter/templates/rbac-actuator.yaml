@@ -1,0 +1,45 @@
+{{- if and .Values.actuator.enabled .Values.rbac.create -}}
+# Copilot / actuator WRITE access — patch-only on workload specs (+ pods/resize
+# for in-place KEP-1287 apply, + Karpenter NodePool patch). Deliberately NO
+# create/delete/update of arbitrary resources. Revoke instantly by deleting this
+# ClusterRoleBinding (or `helm upgrade --set actuator.enabled=false`).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}-actuator
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+    metrixforge.io/component: actuator
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["patch", "get"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list", "get"]
+  - apiGroups: [""]
+    resources: ["pods/resize"]
+    verbs: ["patch"]
+  - apiGroups: ["karpenter.sh"]
+    resources: ["nodepools"]
+    verbs: ["patch", "delete", "get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}-actuator
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+    metrixforge.io/component: actuator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "uni-exporter.fullname" . }}-actuator
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "uni-exporter.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

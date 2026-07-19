@@ -1,0 +1,19 @@
+apiVersion: v2
+name: uni-exporter
+description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing and reliability analytics.
+type: application
+# Chart SemVer — bump on ANY template/values change (independent of appVersion).
+version: 1.0.0
+# The uni-exporter container image tag this chart ships by default.
+appVersion: "1.0.17"
+home: https://metrixforge.io
+icon: https://metrixforge.io/favicon.ico
+keywords:
+  - finops
+  - cost-optimization
+  - kubernetes
+  - rightsizing
+  - reliability
+maintainers:
+  - name: MetrixForge
+    url: https://metrixforge.io

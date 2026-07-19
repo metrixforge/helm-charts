@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "uni-exporter values",
+  "type": "object",
+  "properties": {
+    "replicaCount": { "type": "integer", "minimum": 1 },
+    "image": {
+      "type": "object",
+      "properties": {
+        "registry": { "type": "string" },
+        "repository": { "type": "string" },
+        "tag": { "type": "string" },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean" },
+        "existingSecret": { "type": "string" },
+        "appId": { "type": "string" },
+        "appSecret": { "type": "string" }
+      },
+      "required": ["create"]
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "forwarderUrl": { "type": "string", "format": "uri" },
+        "resourceType": { "type": "string" }
+      }
+    },
+    "lifecycle": { "type": "object", "properties": { "enabled": { "type": "boolean" } } },
+    "leaderElection": { "type": "object", "properties": { "enabled": { "type": "boolean" } } },
+    "actuator": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "dataApiUrl": { "type": "string", "format": "uri" },
+        "pollInterval": { "type": "integer", "minimum": 1 },
+        "hourlyLimit": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "rbac": { "type": "object", "properties": { "create": { "type": "boolean" } } },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean" },
+        "name": { "type": "string" },
+        "annotations": { "type": "object" }
+      }
+    },
+    "nodeSelector": { "type": "object" },
+    "tolerations": { "type": "array" },
+    "affinity": { "type": "object" },
+    "priorityClassName": { "type": "string" },
+    "extraArgs": { "type": "array", "items": { "type": "string" } },
+    "extraEnv": { "type": "array" }
+  }
+}

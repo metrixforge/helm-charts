@@ -1,0 +1,86 @@
+# Default values for the MetrixForge uni-exporter agent.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  registry: docker.io
+  repository: felexa/uni-exporter
+  # Defaults to .Chart.appVersion when empty.
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# Leader election makes >1 replica SAFE (only the leader scrapes/uploads/actuates),
+# but 1 is all you need unless you want a warm standby for HA.
+replicaCount: 1
+
+# ── Per-cluster credentials (from the MetrixForge dashboard → cluster connect) ──
+# APP_SECRET is shown exactly once; paste both via --set, or pre-create a Secret
+# for GitOps (set create=false + existingSecret).
+credentials:
+  create: true
+  # Pre-created Secret with keys APP_ID / APP_SECRET (set create=false to use it).
+  existingSecret: ""
+  appId: ""
+  appSecret: ""
+
+# ── Backend endpoints (SaaS defaults; override only for self-hosted) ──
+config:
+  # S3 presigned-URL ingest endpoint the agent POSTs to.
+  forwarderUrl: https://ingester.metrixforge.io
+  resourceType: nodes
+
+# Pod-lifecycle informer → pod_lifecycle_events → reliability recs / alerts /
+# scaling-activity timeline. On by default (GA on all tenants).
+lifecycle:
+  enabled: true
+
+# ── Copilot / actuator write mode — OPT-IN. Adds a patch-only ClusterRole and
+# turns on the apply loop. Off = strictly read-only. ──
+actuator:
+  enabled: false
+  dataApiUrl: https://app.metrixforge.io
+  pollInterval: 10   # seconds between polls for pending actions
+  hourlyLimit: 20    # blast-radius cap: max applies / hour
+
+# k8s Lease singleton guard (namespaced Role). Prevents double-count / double
+# actuator if >1 replica ever runs. Leave on.
+leaderElection:
+  enabled: true
+
+# Create the read ClusterRole/ClusterRoleBinding + leader-election Role/RoleBinding.
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  # Defaults to the release fullname when empty.
+  name: ""
+  annotations: {}   # e.g. eks.amazonaws.com/role-arn: <IRSA role> for IRSA
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Scheduling — the whole point of the chart: pin the agent where you want it.
+nodeSelector: {}      # e.g. { workload-type: system }
+tolerations: []       # e.g. [{ key: dedicated, operator: Equal, value: monitoring, effect: NoSchedule }]
+affinity: {}
+priorityClassName: ""
+
+# emptyDir for the failed-upload spool.
+spool:
+  sizeLimit: 256Mi
+
+# Escape hatches.
+extraArgs: []         # extra flags appended to the container args (last-wins)
+extraEnv: []          # extra env vars ([]corev1.EnvVar)
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}

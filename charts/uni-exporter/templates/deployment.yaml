@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  # RollingUpdate is correct WITH leader election: the new pod comes up as a
+  # standby and only takes over once the old one releases its Lease (on SIGTERM),
+  # so there is no double-work window. Do NOT switch to Recreate (adds a downtime
+  # gap for no benefit).
+  selector:
+    matchLabels:
+      {{- include "uni-exporter.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "uni-exporter.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "uni-exporter.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: uni-exporter
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          # Explicit flags (image-agnostic — do not rely on the image ENTRYPOINT):
+          # --http-listen is always in the ENTRYPOINT; the rest are the run-profile.
+          args:
+            - --export-parquet
+            - --upload
+            - --upload-spool-dir=/data/spool
+            {{- if .Values.lifecycle.enabled }}
+            - --enable-lifecycle
+            {{- else }}
+            - --enable-lifecycle=false
+            {{- end }}
+            {{- if not .Values.leaderElection.enabled }}
+            - --leader-elect=false
+            {{- end }}
+            {{- with .Values.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "uni-exporter.fullname" . }}-config
+            - secretRef:
+                name: {{ include "uni-exporter.secretName" . }}
+            {{- if .Values.actuator.enabled }}
+            - configMapRef:
+                name: {{ include "uni-exporter.fullname" . }}-actuator-config
+            {{- end }}
+          env:
+            # Downward API — identity + namespace for leader election.
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          # readiness hits the SAME leadership-aware /healthz (200 for a standby).
+          # Must stay permissive: a 503-for-standby readiness deadlocks RollingUpdate
+          # (new standby never Ready → old never terminates → Lease never released).
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: spool
+              mountPath: /data/spool
+      volumes:
+        - name: spool
+          emptyDir:
+            sizeLimit: {{ .Values.spool.sizeLimit }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}

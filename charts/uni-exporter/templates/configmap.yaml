@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "uni-exporter.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "uni-exporter.labels" . | nindent 4 }}
+data:
+  FORWARDER_URL: {{ .Values.config.forwarderUrl | quote }}
+  RESOURCE_TYPE: {{ .Values.config.resourceType | quote }}
