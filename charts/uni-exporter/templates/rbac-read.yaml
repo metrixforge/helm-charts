@@ -28,6 +28,10 @@ rules:
   - apiGroups: ["metrics.k8s.io"]
     resources: ["nodes", "pods"]
     verbs: ["get", "list", "watch"]
+  # Kubelet cAdvisor metrics via the API server proxy (#20 CPU throttling).
+  - apiGroups: [""]
+    resources: ["nodes/proxy"]
+    verbs: ["get"]
   # Karpenter — read-only NodePool + EC2NodeClass for the optimization engine.
   - apiGroups: ["karpenter.sh"]
     resources: ["nodepools"]
