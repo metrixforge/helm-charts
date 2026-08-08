@@ -13,4 +13,12 @@ data:
   DATA_API_URL: {{ .Values.actuator.dataApiUrl | quote }}
   ACTUATOR_POLL_INTERVAL: {{ .Values.actuator.pollInterval | quote }}
   ACTUATOR_HOURLY_LIMIT: {{ .Values.actuator.hourlyLimit | quote }}
+  ACTUATOR_LONG_POLL_WAIT: {{ .Values.actuator.longPollWait | quote }}
+  {{- if .Values.gitops.writeback.enabled }}
+  # Karpenter Phase 7. Older agent images ignore these keys entirely, so a chart
+  # ahead of the image is harmless — the feature just stays dormant.
+  ACTUATOR_GITOPS_WRITEBACK: "true"
+  ACTUATOR_GITOPS_TOKEN_SECRET: {{ .Values.gitops.writeback.tokenSecretRef | quote }}
+  ACTUATOR_GITOPS_LLM: {{ .Values.gitops.writeback.llm | quote }}
+  {{- end }}
 {{- end }}

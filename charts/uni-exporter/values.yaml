@@ -41,8 +41,43 @@ lifecycle:
 actuator:
   enabled: false
   dataApiUrl: https://app.metrixforge.io
-  pollInterval: 10   # seconds between polls for pending actions
+  pollInterval: 10   # FLOOR between polls, not a fixed cadence — see longPollWait
   hourlyLimit: 20    # blast-radius cap: max applies / hour
+  # Ask the backend to HOLD the pending request until an action lands, instead
+  # of polling on a fixed timer. Cuts pickup latency for a clicked action from
+  # 10-60s to under a second, and lowers request volume (~2/min vs ~6/min).
+  # Set 0 to disable and fall back to pure interval polling.
+  longPollWait: 25   # seconds; the server clamps to its own ceiling
+
+# Karpenter Phase 7 — GitOps PR-writeback.
+#
+# On Flux/Argo clusters a direct CRD patch is reverted by the next reconcile
+# ("template drift"), so NodePool recommendations can never stick. With this on,
+# applying such a recommendation opens a Pull/Merge Request against your source
+# repo instead; you review and merge, and GitOps rolls it out normally.
+#
+# The capability ships dormant in every agent build — this flag is the only
+# thing that activates it, and it also grants the read-only RBAC on Flux/Argo
+# source CRs plus read on the single named token Secret.
+gitops:
+  writeback:
+    enabled: false
+    # Name of a Secret IN THIS NAMESPACE holding the git provider token
+    # (GitHub PAT / GitLab project-access token). Never leaves your cluster and
+    # is never stored by MetrixForge. Minimum scopes:
+    #   GitHub — contents:write + pull_requests:write
+    #   GitLab — write_repository + API (for the MR)
+    tokenSecretRef: ""
+    # Send candidate manifest files to MetrixForge so an LLM can locate the
+    # exact line to change. Needed because a Helm/Kustomize-rendered field does
+    # not map back to a source values.yaml line on its own. The output is a PR a
+    # human reviews before merging, so a wrong edit is a rejected PR, never a
+    # broken cluster.
+    #
+    # Set false if config files must not leave the cluster: the agent then does
+    # a plain-YAML edit and openly refuses templated manifests rather than
+    # guessing.
+    llm: true
 
 # k8s Lease singleton guard (namespaced Role). Prevents double-count / double
 # actuator if >1 replica ever runs. Leave on.

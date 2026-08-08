@@ -26,6 +26,17 @@ rules:
   - apiGroups: ["karpenter.sh"]
     resources: ["nodepools"]
     verbs: ["patch", "delete", "get"]
+  # HPA target coupling (#18 Phase 2). When a rightsizing change lands on an
+  # HPA-controlled workload the agent patches the HPA's averageUtilization so
+  # the absolute scale trigger (request × target) is preserved and the resize
+  # doesn't self-inflict a scale-out. get + patch only.
+  #
+  # This rule shipped in infra/apply-mode.yaml but was never mirrored here, so
+  # chart-installed agents silently lacked it and HPA coupling failed with a
+  # 403 on those clusters. Keep the two in sync.
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

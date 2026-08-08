@@ -38,7 +38,21 @@
         "enabled": { "type": "boolean" },
         "dataApiUrl": { "type": "string", "format": "uri" },
         "pollInterval": { "type": "integer", "minimum": 1 },
-        "hourlyLimit": { "type": "integer", "minimum": 0 }
+        "hourlyLimit": { "type": "integer", "minimum": 0 },
+        "longPollWait": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "gitops": {
+      "type": "object",
+      "properties": {
+        "writeback": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "tokenSecretRef": { "type": "string" },
+            "llm": { "type": "boolean" }
+          }
+        }
       }
     },
     "rbac": { "type": "object", "properties": { "create": { "type": "boolean" } } },
