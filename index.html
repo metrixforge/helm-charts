@@ -61,9 +61,9 @@ helm repo update<button class="copy" onclick="cp('add',this)">Copy</button></div
       <div class="chart">
         <div>
           <h3>uni-exporter</h3>
-          <p>The in-cluster agent — collects metrics, usage percentiles and pod-lifecycle events. One leader-elected Deployment, read-only by default.</p>
+          <p>The in-cluster agent — collects metrics, usage percentiles and pod-lifecycle events. One leader-elected Deployment, read-only by default. Opt in to Copilot apply, or to GitOps PR-writeback on Flux/Argo clusters.</p>
         </div>
-        <span class="badge">v1.1.0 · app 1.0.19</span>
+        <span class="badge">v1.2.0 · app 1.0.27</span>
       </div>
       <div class="code" style="margin-top:14px" id="inst">helm install uni-exporter metrixforge/uni-exporter \
   --namespace metrixforge --create-namespace \
@@ -72,7 +72,7 @@ helm repo update<button class="copy" onclick="cp('add',this)">Copy</button></div
       <div class="links">
         <a href="https://github.com/metrixforge/helm-charts/tree/main/charts/uni-exporter">Chart source</a>
         <a href="https://github.com/metrixforge/helm-charts/blob/main/charts/uni-exporter/values.yaml">values.yaml (all options)</a>
-        <a href="https://github.com/metrixforge/helm-charts#readme">Docs / GitOps / Copilot</a>
+        <a href="https://github.com/metrixforge/helm-charts/blob/main/charts/uni-exporter/README.md">Docs / GitOps / Copilot</a>
       </div>
     </div>
 
