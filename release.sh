@@ -63,8 +63,16 @@ tmp=$(mktemp -d); helm package "$CHART_DIR" -d "$tmp" >/dev/null
 tgz="$tmp/uni-exporter-$CHART.tgz"
 echo "==> packaged $(basename "$tgz")"
 
-wt=$(mktemp -d)
-git worktree add -q "$wt" gh-pages
+# A STABLE path, not mktemp. The first run of this script put the worktree under
+# /private/var/folders/.../tmp.XXXX; the operator pushed `main` and the second
+# command — against an unreadable temp path — was lost. main is only source;
+# gh-pages is what customers actually install from, so losing that half publishes
+# nothing while looking done.
+wt=".gh-pages"
+if [ ! -d "$wt/.git" ]; then
+  git worktree add -q "$wt" gh-pages
+fi
+grep -qxF "$wt/" .gitignore 2>/dev/null || echo "$wt/" >> .gitignore
 cp "$tgz" "$wt/"
 ( cd "$wt" && helm repo index . --url "$REPO_URL" --merge index.yaml >/dev/null && git add -A )
 echo "==> gh-pages staged:"
@@ -73,13 +81,13 @@ git add "$CHART_DIR/Chart.yaml"
 
 cat <<MSG
 
-==> NOTHING PUSHED. Review, then:
+==> NOTHING PUSHED. Both halves are required:
+      main     — chart source. Changes nothing for customers on its own.
+      gh-pages — index.yaml + the .tgz. THIS is what \`helm install\` reads.
 
-    git -C "$PWD" commit -m "chart: uni-exporter $CHART — appVersion $APP"
-    git -C "$wt" commit -m "publish uni-exporter $CHART (appVersion $APP)"
-    git -C "$PWD" push origin main
-    git -C "$wt" push origin gh-pages
-    git -C "$PWD" worktree remove "$wt"
+    git commit -am "chart: uni-exporter $CHART — appVersion $APP" && git push origin main
+    git -C .gh-pages commit -am "publish uni-exporter $CHART (appVersion $APP)" && git -C .gh-pages push origin gh-pages
 
-    Then verify:  helm repo update && helm search repo metrixforge --versions
+    Then verify (this is the check that matters):
+    helm repo update && helm search repo metrixforge --versions | head -3
 MSG
