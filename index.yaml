@@ -2,8 +2,31 @@ apiVersion: v1
 entries:
   uni-exporter:
   - apiVersion: v2
+    appVersion: 1.0.39
+    created: "2026-09-07T11:29:57.699084+03:00"
+    description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
+      and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
+      and reliability analytics.
+    digest: 5bd01b72eefc09602bfed4e6e6ab8b68904c6f8bf6546ab447739f9d958a0649
+    home: https://metrixforge.io
+    icon: https://metrixforge.io/favicon.ico
+    keywords:
+    - finops
+    - cost-optimization
+    - kubernetes
+    - rightsizing
+    - reliability
+    maintainers:
+    - name: MetrixForge
+      url: https://metrixforge.io
+    name: uni-exporter
+    type: application
+    urls:
+    - https://metrixforge.github.io/helm-charts/uni-exporter-1.2.1.tgz
+    version: 1.2.1
+  - apiVersion: v2
     appVersion: 1.0.27
-    created: "2026-08-09T00:22:26.933894+03:00"
+    created: "2026-09-07T11:29:57.698304+03:00"
     description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
       and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
       and reliability analytics.
@@ -26,7 +49,7 @@ entries:
     version: 1.2.0
   - apiVersion: v2
     appVersion: 1.0.19
-    created: "2026-08-09T00:22:26.933399+03:00"
+    created: "2026-09-07T11:29:57.697221+03:00"
     description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
       and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
       and reliability analytics.
@@ -49,7 +72,7 @@ entries:
     version: 1.1.0
   - apiVersion: v2
     appVersion: 1.0.17
-    created: "2026-08-09T00:22:26.933016+03:00"
+    created: "2026-09-07T11:29:57.696883+03:00"
     description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
       and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
       and reliability analytics.
@@ -70,4 +93,4 @@ entries:
     urls:
     - https://metrixforge.github.io/helm-charts/uni-exporter-1.0.0.tgz
     version: 1.0.0
-generated: "2026-08-09T00:22:26.930917+03:00"
+generated: "2026-09-07T11:29:57.696441+03:00"
