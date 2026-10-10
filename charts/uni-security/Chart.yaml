@@ -1,0 +1,19 @@
+apiVersion: v2
+name: uni-security
+description: MetrixForge in-cluster security agent — scans container images for vulnerabilities, runs CIS/NSA benchmarks, and reads a vulnerability scanner you already run instead of scanning again.
+type: application
+# Chart SemVer — bump on ANY template/values change (independent of appVersion).
+version: 1.0.0
+# The uni-security container image tag this chart ships by default.
+appVersion: "1.0.8"
+home: https://metrixforge.io
+icon: https://metrixforge.io/favicon.ico
+keywords:
+  - security
+  - vulnerability-scanning
+  - cis-benchmark
+  - kubernetes
+  - compliance
+maintainers:
+  - name: MetrixForge
+    url: https://metrixforge.io

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "uni-security values",
+  "type": "object",
+  "properties": {
+    "replicaCount": {
+      "type": "integer", "minimum": 1, "maximum": 1,
+      "description": "Must be 1: this agent has no leader election, so a second replica scans every image twice and uploads both results."
+    },
+    "credentials": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean" },
+        "existingSecret": { "type": "string" },
+        "appId": { "type": "string" },
+        "appSecret": { "type": "string" }
+      }
+    },
+    "existingReports": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "maxAge": {
+          "type": "string", "pattern": "^[0-9]+(s|m|h)$",
+          "description": "How old the newest existing report may be before we scan ourselves instead. A CRD can outlive its operator."
+        }
+      }
+    },
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "interval": { "type": "string", "pattern": "^[0-9]+(s|m|h)$" },
+        "frameworks": { "type": "string" }
+      }
+    },
+    "scan": {
+      "type": "object",
+      "properties": {
+        "interval": { "type": "string", "pattern": "^[0-9]+(s|m|h)$" },
+        "timeout": { "type": "string", "pattern": "^[0-9]+(s|m|h)$" },
+        "excludeNamespaces": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # Release-suffixed so two installs on one cluster never collide on a
+  # cluster-scoped object.
+  name: {{ include "uni-security.fullname" . }}
+  labels:
+    {{- include "uni-security.labels" . | nindent 4 }}
+rules:
+  # Everything below is READ ONLY. This agent never creates, patches or deletes
+  # anything: it reports what it finds and does not act on it.
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "serviceaccounts", "services", "nodes"]
+    verbs: ["list", "get"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "daemonsets", "statefulsets", "replicasets"]
+    verbs: ["list", "get"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["list", "get"]
+  # Roles and bindings are read by the CIS/NSA benchmark scanner, which checks
+  # for over-permissive access. We do not evaluate RBAC as a control of our own.
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
+    verbs: ["list", "get"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies", "ingresses"]
+    verbs: ["list", "get"]
+{{- if .Values.existingReports.enabled }}
+  # Read a vulnerability scanner you already run. Two resources of one group,
+  # read-only — never `*`, and never write: if your operator is wrong we say so,
+  # we do not fix it.
+  #
+  # Granted even though most clusters have no such CRD, because without the rule
+  # the list fails Forbidden rather than NotFound — and "we are not allowed to
+  # look" must not be indistinguishable from "there is nothing here".
+  - apiGroups: ["aquasecurity.github.io"]
+    resources: ["vulnerabilityreports", "clustervulnerabilityreports"]
+    verbs: ["list", "get"]
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "uni-security.fullname" . }}
+  labels:
+    {{- include "uni-security.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "uni-security.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "uni-security.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}

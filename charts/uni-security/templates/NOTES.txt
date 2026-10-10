@@ -1,0 +1,74 @@
+MetrixForge security agent installed as {{ .Release.Name }} in {{ .Release.Namespace }}.
+
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "uni-security.fullname" . }}
+  kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "uni-security.fullname" . }} -f
+
+What it does, and what it does NOT do:
+
+  * Scans every unique container image in the cluster every {{ .Values.scan.interval }}
+    and uploads vulnerability counts and risk scores. READ ONLY — it creates,
+    patches and deletes nothing.
+{{- if .Values.existingReports.enabled }}
+  * If a Trivy Operator is already installed here, the agent reads ITS reports
+    instead of scanning, as long as their newest report is under
+    {{ .Values.existingReports.maxAge }} old. Reports older than that are declined,
+    with the reason logged, and the agent scans itself — a VulnerabilityReport CRD
+    can outlive the operator that wrote it, and stale findings presented as current
+    are worse than no findings.
+{{- else }}
+  * Reading an existing Trivy Operator is DISABLED (existingReports.enabled=false),
+    so this agent always scans the images itself.
+{{- end }}
+{{- if .Values.compliance.enabled }}
+  * Runs the {{ .Values.compliance.frameworks }} benchmarks every {{ .Values.compliance.interval }}.
+{{- else }}
+  * Benchmark scanning is DISABLED (compliance.enabled=false).
+{{- end }}
+
+First results appear in the dashboard after the first cycle completes — the
+vulnerability database is ~120 MiB and is downloaded once per pod.
+
+────────────────────────────────────────────────────────────────────────────
+Two things that go wrong on real clusters. Both are quiet, so they are printed
+here rather than left for you to discover.
+
+1. POD STAYS PENDING → your nodes are tainted and this chart adds no
+   tolerations by default.
+
+   We do not tolerate everything on purpose: a blanket `operator: Exists` also
+   tolerates node.kubernetes.io/not-ready and /unreachable, which would keep
+   this pod on a dead node instead of letting Kubernetes evict it after the
+   usual 5 minutes — and it would let the pod land on Fargate or on a node your
+   autoscaler is actively draining. A taint is a decision you made; we would be
+   overriding it without knowing why.
+
+   Check, then allow exactly the pool you want:
+
+     kubectl -n {{ .Release.Namespace }} get pod -l app.kubernetes.io/name={{ include "uni-security.name" . }}
+     kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
+
+     helm upgrade {{ .Release.Name }} <chart> --reuse-values        --set nodeSelector.pool=<your-pool>        --set tolerations[0].key=pool        --set tolerations[0].operator=Equal        --set tolerations[0].value=<your-pool>        --set tolerations[0].effect=NoSchedule
+
+2. SOME IMAGES MISSING FROM YOUR RESULTS → they are in a private registry and
+   the scan of each got 401. The agent logs each one and carries on, so the
+   surface fills partially and nothing else tells you.
+
+     kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "uni-security.fullname" . }} | grep "scan failed"
+
+   * Amazon ECR — this is an AWS identity question, not a password. Attach an
+     IRSA role carrying AmazonEC2ContainerRegistryReadOnly:
+
+       --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::<acct>:role/<role>
+
+   * Any other private registry — give Trivy a reader account:
+
+       --set registryCredentials.existingSecret=<secret with TRIVY_USERNAME / TRIVY_PASSWORD>
+────────────────────────────────────────────────────────────────────────────
+
+{{- if .Values.credentials.create }}
+
+The credentials you passed were stored in Secret {{ include "uni-security.secretName" . }}.
+{{- else }}
+
+Using the existing Secret {{ include "uni-security.secretName" . }} — nothing was created.
+{{- end }}

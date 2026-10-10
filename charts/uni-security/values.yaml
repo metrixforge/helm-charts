@@ -1,0 +1,112 @@
+# Default values for the MetrixForge uni-security agent.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  registry: docker.io
+  repository: felexa/uni-security
+  # Defaults to .Chart.appVersion when empty.
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# One replica. Unlike uni-exporter this agent has no leader election, so a second
+# replica would scan every image twice and upload both results.
+replicaCount: 1
+
+# ── Per-cluster credentials (from the MetrixForge dashboard → cluster connect) ──
+# If uni-exporter is already installed in this namespace, point at ITS Secret
+# rather than pasting the credentials again:
+#   --set credentials.create=false --set credentials.existingSecret=uni-exporter-secrets
+credentials:
+  create: true
+  # Pre-created Secret with keys APP_ID / APP_SECRET (set create=false to use it).
+  existingSecret: ""
+  appId: ""
+  appSecret: ""
+
+# ── Backend endpoint (SaaS default; override only for self-hosted) ──
+config:
+  forwarderUrl: https://ingester.metrixforge.io
+
+serviceAccount:
+  create: true
+  name: ""
+  # 🔴 This is where ECR access belongs. Images in a private Amazon ECR are
+  # pulled by Trivy using the pod's AWS identity, not a username and password —
+  # without one the scan of each such image fails with `401 Unauthorized` and
+  # that image is simply missing from your results. Attach an IRSA role with
+  # AmazonEC2ContainerRegistryReadOnly:
+  #
+  #   serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::<acct>:role/<role>
+  annotations: {}
+
+# ── Private registries that are NOT ECR (Harbor, GitLab, a private Docker Hub) ──
+#
+# Trivy reads these from the environment. Without them, images in such a
+# registry fail with 401 and are absent from your results — the scan continues,
+# so the failure is per-image and quiet. Prefer existingSecret over inline
+# values so the password does not live in your Helm history.
+registryCredentials:
+  # Pre-created Secret with keys TRIVY_USERNAME / TRIVY_PASSWORD.
+  existingSecret: ""
+  username: ""
+  password: ""
+
+# ── Image scanning ──
+scan:
+  # Full sweep cadence. Each cycle refreshes the vulnerability database once and
+  # then scans every unique image in the cluster.
+  interval: 6h
+  # Per-image ceiling, so one pathological image cannot stall the sweep.
+  timeout: 5m
+  # Namespaces whose workloads are not scanned. Our own namespace is excluded by
+  # default so the agent does not report on itself.
+  excludeNamespaces: "kube-system,kube-public,kube-node-lease,metrixforge"
+
+# ── Reading a scanner you ALREADY run, instead of scanning again ──
+#
+# When a Trivy Operator is installed and its reports are fresh, the agent reads
+# them and skips its own scan entirely: no scanner binary in the hot path, no
+# registry credentials in our process, and no second opinion disagreeing with the
+# tool you already trust.
+#
+# maxAge is what makes this safe to leave on. A VulnerabilityReport CRD can
+# outlive the operator that wrote it — we have measured a cluster holding 28
+# reports with no operator running, every one of them seven weeks old. Reading
+# those would present stale findings as current, so a source older than this is
+# declined (with the reason reported) and the agent scans instead.
+#
+# 36h rather than 24h because Trivy Operator's own rescan interval is commonly
+# 24h: a 24h limit would decline a healthy install measured just before its next
+# sweep.
+existingReports:
+  enabled: true
+  maxAge: 36h
+
+# ── CIS / NSA benchmark scanning (kubescape) ──
+compliance:
+  enabled: true
+  interval: 12h
+  # cis-v1.12.0 is the generic benchmark; cis-eks-t1.8.0 / cis-aks-t1.8.0 are the
+  # managed-service variants. NSA is the hardening guide.
+  frameworks: "cis-eks-t1.8.0,nsa"
+
+# Vulnerability database and image-layer cache. emptyDir on purpose: the database
+# is re-downloaded on restart (~120 MiB) rather than occupying a PV, and nothing
+# here is worth persisting across a pod's life.
+storage:
+  sizeLimit: 10Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}
