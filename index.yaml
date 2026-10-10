@@ -3,7 +3,7 @@ entries:
   uni-exporter:
   - apiVersion: v2
     appVersion: 1.0.39
-    created: "2026-09-07T11:29:57.699084+03:00"
+    created: "2026-10-10T18:47:50.852588+03:00"
     description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
       and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
       and reliability analytics.
@@ -26,7 +26,7 @@ entries:
     version: 1.2.1
   - apiVersion: v2
     appVersion: 1.0.27
-    created: "2026-09-07T11:29:57.698304+03:00"
+    created: "2026-10-10T18:47:50.851834+03:00"
     description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
       and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
       and reliability analytics.
@@ -49,7 +49,7 @@ entries:
     version: 1.2.0
   - apiVersion: v2
     appVersion: 1.0.19
-    created: "2026-09-07T11:29:57.697221+03:00"
+    created: "2026-10-10T18:47:50.84898+03:00"
     description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
       and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
       and reliability analytics.
@@ -72,7 +72,7 @@ entries:
     version: 1.1.0
   - apiVersion: v2
     appVersion: 1.0.17
-    created: "2026-09-07T11:29:57.696883+03:00"
+    created: "2026-10-10T18:47:50.848378+03:00"
     description: MetrixForge in-cluster agent — collects Kubernetes metrics, percentiles
       and pod-lifecycle events and exports them to MetrixForge for FinOps, rightsizing
       and reliability analytics.
@@ -93,4 +93,28 @@ entries:
     urls:
     - https://metrixforge.github.io/helm-charts/uni-exporter-1.0.0.tgz
     version: 1.0.0
-generated: "2026-09-07T11:29:57.696441+03:00"
+  uni-security:
+  - apiVersion: v2
+    appVersion: 1.0.8
+    created: "2026-10-10T18:47:50.852998+03:00"
+    description: MetrixForge in-cluster security agent — scans container images for
+      vulnerabilities, runs CIS/NSA benchmarks, and reads a vulnerability scanner
+      you already run instead of scanning again.
+    digest: 96168c9ff99ff16902f115cfc33808c9f0219d92d7a75f5a3e24cbfe0d64107d
+    home: https://metrixforge.io
+    icon: https://metrixforge.io/favicon.ico
+    keywords:
+    - security
+    - vulnerability-scanning
+    - cis-benchmark
+    - kubernetes
+    - compliance
+    maintainers:
+    - name: MetrixForge
+      url: https://metrixforge.io
+    name: uni-security
+    type: application
+    urls:
+    - https://metrixforge.github.io/helm-charts/uni-security-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-10-10T18:47:50.847648+03:00"
